@@ -4,36 +4,7 @@ import torch
 from torch import nn, optim
 from utils import *
 
-'''
-class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5) # (in_channels, out_channels, kernel_size)
-        self.dropout = nn.Dropout2d()
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 12, 5) # (in_channels, out_channels, kernel_size)
-        
-        self.classifier = nn.Sequential(
-            nn.Linear(12 * 53 * 53, 120),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(120, 84),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(84, 3),
-        )
 
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = self.dropout(x)
-        x = self.pool(x)
-        x = F.relu(self.conv2(x))
-        x = self.dropout(x)
-        x = self.pool(x)
-        x = torch.flatten(x, 1)
-        x = self.classifier(x)
-        return x
-'''
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
