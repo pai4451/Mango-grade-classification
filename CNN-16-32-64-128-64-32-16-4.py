@@ -10,7 +10,7 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
         
         self.conv = nn.Sequential( 
-                # 3 * 256 * 256 -> 32 * 128 * 128
+                # 3 * 224 * 224 -> 32 * 112 * 118
                 nn.Conv2d(3, 16, 3, padding = 1), 
                 torch.nn.BatchNorm2d(16),
                 nn.Tanh(),
@@ -19,9 +19,8 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size = 2),
 
-                #nn.Dropout(0.1),
 
-                # 32 * 128 * 128 -> 64 * 64 * 64
+                # 32 * 112 * 112 -> 64 * 56 * 56
                 nn.Conv2d(32, 64, 3, padding = 1),
                 torch.nn.BatchNorm2d(64),
                 nn.Tanh(),
@@ -30,9 +29,8 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size = 2),
 
-                #nn.Dropout(0.5),
 
-                # 64 * 64 * 64 -> 32 * 32 * 32 
+                # 64 * 56 * 56 -> 32 * 28 * 28 
                 nn.Conv2d(128, 64, 3, padding = 1), 
                 torch.nn.BatchNorm2d(64),
                 nn.Tanh(),
@@ -41,9 +39,8 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size = 2),
 
-                #nn.Dropout(0.5),
 
-                # 32 * 32 * 32 -> 16 * 16 * 16
+                # 32 * 28 * 28 -> 16 * 14 * 14
                 nn.Conv2d(32, 16, 3, padding = 1), 
                 torch.nn.BatchNorm2d(16),
                 nn.Tanh(),
@@ -51,10 +48,8 @@ class CNN(nn.Module):
                 # torch.nn.BatchNorm2d(16),
                 # nn.ReLU(),
                 nn.MaxPool2d(kernel_size = 2),
-                
-                #nn.Dropout(0.5),
 
-                # 16 * 16 * 16 -> 4 * 8 * 8
+                # 16 * 14 * 14 -> 4 * 7 * 7
                 nn.Conv2d(16, 4, 3, padding = 1), 
                 torch.nn.BatchNorm2d(4),
                 nn.Tanh(),
@@ -78,7 +73,6 @@ class CNN(nn.Module):
 
     def forward(self, x):
         x = self.conv(x)
-        #x = x.view(x.size()[0], 4 * 7 * 7, 1, -1).squeeze()
         x = torch.flatten(x, 1)
         x = self.fc(x)
         x = self.out(x)
