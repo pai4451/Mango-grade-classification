@@ -5,7 +5,8 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 import torch
-from torch import nn, optim
+import torch.nn as nn
+import torch.optim as optim
 from PIL import Image
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
