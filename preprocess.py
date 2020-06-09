@@ -1,6 +1,5 @@
 import os, glob
 from shutil import copyfile
-# from itertools import product
 
 import cv2
 import numpy as np
@@ -33,6 +32,8 @@ def color_filter(hsv, img):
     colors = {'red':(0,0,255), 'green':(0,255,0), 'blue':(255,0,0), 
         'yellow':(0, 255, 217), 'orange':(0,140,255)}
 
+
+    best_x, best_y, best_ma, best_MA, best_angle = 0, 0, 0, 0, 0
     for key, value in upper.items():
         kernel = np.ones((9,9),np.uint8)
         mask = cv2.inRange(hsv, lower[key], upper[key])
@@ -42,21 +43,21 @@ def color_filter(hsv, img):
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
         # centre = None
 
-        if len(cnts) >= 5:
-            c = max(cnts, key=cv2.contourArea)
-            ellipse = cv2.fitEllipse(c)
-            cv2.ellipse(img, ellipse, (0,0,0), 3)
-            # M = cv2.moments(c)
-            # centre = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        if len(cnts) != 0:
+            for cont in cnts:
+                if len(cont) >= 5:
+                    (x,y),(ma,MA),angle = cv2.fitEllipse(cont)
+                    if ma > best_ma and MA > best_MA:
+                        (best_x, best_y), (best_ma, best_MA), best_angle = (x,y),(ma,MA),angle
+        ellipse = (best_x, best_y), (best_ma, best_MA), best_angle
 
-            # if radius > 0.5:
-            #     cv2.ellipse(img, (int(x), int(y)), int(radius), colors[key], 2)
+    Ellipse = cv2.ellipse(np.zeros_like(img), ellipse, (255,255,255), -1)
+    result = np.bitwise_and(img, Ellipse)
 
-    return mask, img
+    return mask, result
 
 def main():
-    for data, proc in [(train_data, train_proc), (dev_data, dev_proc)]:
-        break_counter = 0
+    for data in [train_data, dev_data]:
         data_img = glob.glob(os.path.join(data, "*.jpg"))
         for data_file in data_img:
             # Load file
@@ -64,19 +65,15 @@ def main():
             # Convert BGR to HSV
             hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-            mask, img = color_filter(hsv, img)
+            mask, result = color_filter(hsv, img)
 
             # Stack results
-            mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-            result = np.vstack((mask, img))
+            # mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+            # result = np.vstack((mask, result))
 
             # Save processed file
             proc_file = data_file.replace("data", "processed")
             cv2.imwrite(proc_file, result)
-            if break_counter == 10:
-                break
-            break_counter += 1
-        break
 
 if __name__ == '__main__':
     main()
