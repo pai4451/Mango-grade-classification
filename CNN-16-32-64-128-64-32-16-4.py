@@ -10,7 +10,7 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
         
         self.conv = nn.Sequential( 
-                # 3 * 224 * 224 -> 32 * 112 * 118
+                # 3 * 224 * 224 -> 32 * 112 * 112
                 nn.Conv2d(3, 16, 3, padding = 1), 
                 torch.nn.BatchNorm2d(16),
                 nn.Tanh(),
@@ -20,7 +20,7 @@ class CNN(nn.Module):
                 nn.MaxPool2d(kernel_size = 2),
 
 
-                # 32 * 112 * 112 -> 64 * 56 * 56
+                # 32 * 112 * 112 -> 128 * 56 * 56
                 nn.Conv2d(32, 64, 3, padding = 1),
                 torch.nn.BatchNorm2d(64),
                 nn.Tanh(),
@@ -30,7 +30,7 @@ class CNN(nn.Module):
                 nn.MaxPool2d(kernel_size = 2),
 
 
-                # 64 * 56 * 56 -> 32 * 28 * 28 
+                # 128 * 56 * 56 -> 32 * 28 * 28 
                 nn.Conv2d(128, 64, 3, padding = 1), 
                 torch.nn.BatchNorm2d(64),
                 nn.Tanh(),
@@ -235,7 +235,7 @@ if __name__ == '__main__':
                                                      ]),
                         'valid': transforms.Compose([transforms.Resize((224, 224)),
                                                      MyRotationTransform(angles=15),
-                                                     transforms.RandomHorizontalFlip(p=0.5),
+                                                     #transforms.RandomHorizontalFlip(p=0.5),
                                                      transforms.ToTensor(),
                                                      transforms.Normalize(
                                                      mean, std),
@@ -251,6 +251,7 @@ if __name__ == '__main__':
     valid_loader = torch.utils.data.DataLoader(
         dataset=valid_data, batch_size=BATCH_SIZE, shuffle=False)
 
+    
     cnn = CNN()
     cnn.to(device)
 
