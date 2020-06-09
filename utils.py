@@ -11,6 +11,7 @@ from PIL import Image
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 from torch.utils.data.dataset import Dataset
+from torch.utils.data import ConcatDataset
 from torchvision import transforms, models
 
 
@@ -26,7 +27,7 @@ class MyRotationTransform:
 class MangoDataset(Dataset):
     """Mango dataset."""
 
-    def __init__(self, csv_file, root_dir, transform=None):
+    def __init__(self, csv_file, root_dir, transform=None, encoding = None, header ='infer'):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -35,7 +36,7 @@ class MangoDataset(Dataset):
                 on a sample.
         """
         self.class_to_idx = {'A':0,'B':1,'C':2}
-        self.mango_frame = pd.read_csv(csv_file)
+        self.mango_frame = pd.read_csv(csv_file, encoding = encoding, header = header)
         self.root_dir = root_dir
         self.transform = transform
 
@@ -47,13 +48,12 @@ class MangoDataset(Dataset):
         img_name = os.path.join(self.root_dir, self.mango_frame.iloc[idx, 0])
         image = Image.open(img_name)
         label = self.mango_frame.iloc[idx, 1]
-        label = self.class_to_idx[label]
+        label = self.class_to_idx[label[-1]]
 
         if self.transform:
             image = self.transform(image)
 
         return image, label
-
 
 
 class EarlyStopping:
