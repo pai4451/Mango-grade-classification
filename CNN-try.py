@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from tqdm import tqdm
+
 from utils import *
 
 
@@ -79,6 +81,7 @@ def train_and_validate(model, loss_criterion, optimizer, epochs=25, patience=3, 
         history: (dict object): Having training loss, accuracy and validation loss, accuracy
     '''
 
+    print("Training...")
     start = time.time()
     history = []
     best_acc = 0.0
@@ -86,6 +89,7 @@ def train_and_validate(model, loss_criterion, optimizer, epochs=25, patience=3, 
     early_stopping = EarlyStopping(
         patience=patience, verbose=False, save_name=save_name)
     for epoch in range(epochs):
+        print(f"Epoch {epoch}")
         epoch_start = time.time()
         # Set to training mode
         model.train()
@@ -94,7 +98,7 @@ def train_and_validate(model, loss_criterion, optimizer, epochs=25, patience=3, 
         train_acc = 0.0
         valid_loss = 0.0
         valid_acc = 0.0
-        for i, data in enumerate(train_loader):
+        for i, data in enumerate(tqdm(train_loader)):
             inputs, labels = data[0].to(device), data[1].to(device)
             # Clean existing gradients
             optimizer.zero_grad()
@@ -119,7 +123,8 @@ def train_and_validate(model, loss_criterion, optimizer, epochs=25, patience=3, 
             # Set to evaluation mode
             model.eval()
             # Validation loop
-            for i, data in enumerate(valid_loader):
+            print("Validating...")
+            for i, data in enumerate(tqdm(valid_loader)):
                 inputs, labels = data[0].to(device), data[1].to(device)
                 # Forward pass - compute outputs on input data using the model
                 outputs = model(inputs)
@@ -174,9 +179,9 @@ def computeTestSetAccuracy(model, test_data, test_loader, loss_criterion):
 
         # Set to evaluation mode
         model.eval()
-
+        print("Testing...")
         # validation loop
-        for i, data in enumerate(test_loader):
+        for i, data in enumerate(tqdm(test_loader)):
             inputs, labels = data[0].to(device), data[1].to(device)
             # Forward pass - compute outputs on input data using the model
             outputs = model(inputs)
