@@ -27,8 +27,19 @@ for type_ in ['train', 'dev']:
 
 def color_filter(hsv, img):
     global fail_num
-    lower = {'red':(166, 84, 141), 'yellow':(21, 59, 119), 'orange':(0, 50, 80), 'green':(61, 122, 129)} 
-    upper = {'red':(186,255,255), 'yellow':(60,255,255), 'orange':(20,255,255), 'green':(86,255,255)}
+
+    limit = 2.0
+    grid = (8,8)
+    clahe = cv2.createCLAHE(clipLimit=limit, tileGridSize=grid)
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+
+    cl = clahe.apply(l)
+    limg = cv2.merge((cl,a,b))
+
+    img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+    # lower = {'red':(166, 84, 141), 'yellow':(21, 59, 119), 'orange':(0, 50, 80), 'green':(61, 122, 129)} 
+    # upper = {'red':(186,255,255), 'yellow':(60,255,255), 'orange':(20,255,255), 'green':(86,255,255)}
 
     # colors = {'red':(0,0,255), 'orange':(0,140,255), 'yellow':(0, 255, 217), 'green':(0,255,0)}
 
@@ -77,7 +88,6 @@ def color_filter(hsv, img):
     ellipse = original_mid, 1.6*original_mid, 0
     Ellipse = cv2.ellipse(np.zeros_like(img), ellipse, (255,255,255), -1)
     result = np.bitwise_and(img, Ellipse)
-        # fail_num += 1
 
     return mask, result
 
