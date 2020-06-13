@@ -7,37 +7,40 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-# original data
-train_data = './data/C1-P1_Train'
-dev_data   = './data/C1-P1_Dev'
+# # original data
+# train_data = './data/C1-P1_Train'
+# dev_data   = './data/C1-P1_Dev'
 
-# processed data
-train_proc = './processed/C1-P1_Train'
-dev_proc = './processed/C1-P1_Dev'
+# # processed data
+# train_proc = './processed/C1-P1_Train'
+# dev_proc = './processed/C1-P1_Dev'
 
-for dir_ in [train_proc, dev_proc]:
-    if not os.path.exists(dir_):
-        os.makedirs(dir_)
 
-for type_ in ['train', 'dev']:
-    if not os.path.exists(f'./processed/{type_}.csv'):
-        src = os.path.join('./data', f'{type_}.csv')
-        dst = os.path.join('./processed', f'{type_}.csv')
-        copyfile(src, dst)
+C1_P1_dir = glob.glob(os.path.join('./data', "C1-P1_*"))
+for dir_ in C1_P1_dir:
+    proc_dir = dir_.replace("data", "processed")
+    if not os.path.exists(proc_dir):
+        os.makedirs(proc_dir)
+
+data_csv = glob.glob(os.path.join('./data', "*.csv"))
+for csv_file in data_csv:
+    proc_csv = csv_file.replace("data", "processed")
+    if not os.path.exists(proc_csv):
+        copyfile(csv_file, proc_csv)
 
 def color_filter(hsv, img):
     global fail_num
 
-    limit = 2.0
-    grid = (8,8)
-    clahe = cv2.createCLAHE(clipLimit=limit, tileGridSize=grid)
-    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
+    # limit = 2.0
+    # grid = (8,8)
+    # clahe = cv2.createCLAHE(clipLimit=limit, tileGridSize=grid)
+    # lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    # l, a, b = cv2.split(lab)
 
-    cl = clahe.apply(l)
-    limg = cv2.merge((cl,a,b))
+    # cl = clahe.apply(l)
+    # limg = cv2.merge((cl,a,b))
 
-    img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+    # img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
     # lower = {'red':(166, 84, 141), 'yellow':(21, 59, 119), 'orange':(0, 50, 80), 'green':(61, 122, 129)} 
     # upper = {'red':(186,255,255), 'yellow':(60,255,255), 'orange':(20,255,255), 'green':(86,255,255)}
 
@@ -94,7 +97,7 @@ def color_filter(hsv, img):
 fail_num = 0
 def main():
     global fail_num
-    for data in [train_data, dev_data]: # [train_data, dev_data]
+    for data in C1_P1_dir:
         print(f"Processing {data} ...")
         data_img = glob.glob(os.path.join(data, "*.jpg"))
         print("Number of data:", len(data_img))
@@ -118,3 +121,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # pass
