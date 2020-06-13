@@ -13,7 +13,7 @@ import torchvision.transforms.functional as TF
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import ConcatDataset
 from torchvision import transforms, models
-
+from tqdm import tqdm
 
 class MyRotationTransform:
     """Rotate by the given angles."""
@@ -149,7 +149,37 @@ def show_train_history(train_history, val_history, monitor = 'Loss',save_name = 
     plt.title('Train History')
     plt.ylabel(monitor)
     plt.xlabel('Epoch')
-    plt.legend(['train','validation'],loc='upper right')
+    plt.legend(['train','validation'],loc='best')
     plt.tight_layout()
     plt.savefig(save_name + ".jpg", format="jpg")
     #plt.show()
+
+def predict(model, test_image_name, transform, save_name):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('Make prediction...')
+    idx_to_class = {0:'A',1:'B',2:'C'}
+    predict = []
+
+    '''
+    Function to predict the class of a single test image
+    Parameters
+        :param model: Model to test
+        :param test_image_name: Test image
+
+    '''
+    for i, img_name in enumerate(tqdm(test_image_name)):
+
+        test_image = Image.open('./data/C1-P1_Test/' + img_name)
+
+        test_image_tensor = transform(test_image)
+        test_image_tensor = test_image_tensor.view(1, 3, 224, 224).to(device)
+
+        with torch.no_grad():
+            model.eval()
+            ps = model(test_image_tensor)
+            topk, topclass = ps.topk(3, dim=1)
+            predict.append(idx_to_class[topclass.cpu().numpy()[0][0]])
+    df = pd.DataFrame({'image_id':test_image_name, 'label':predict})
+    df.to_csv(save_name +'.csv', index=False)
+    print('prediction finish! Generate %s.csv'% save_name)
+    return predict
