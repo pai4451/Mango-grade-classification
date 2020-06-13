@@ -46,8 +46,6 @@ def color_filter(hsv, img):
 
     # colors = {'red':(0,0,255), 'orange':(0,140,255), 'yellow':(0, 255, 217), 'green':(0,255,0)}
 
-    original_mid  = np.array([img.shape[1]/2, img.shape[0]/2])
-    mask = None
     # half_diagonal = np.linalg.norm(np.zeros(2)-img.shape)
 
     # best_x, best_y, best_ma, best_MA, best_angle = 0, 0, 0, 0, 0
@@ -85,12 +83,18 @@ def color_filter(hsv, img):
     # if area_ratio > 0.3:
     #     Ellipse = cv2.ellipse(np.zeros_like(img), ellipse, (255,255,255), -1)
     #     result = np.bitwise_and(img, Ellipse)
-    # else:
-        # # 1: vertical; 0: horizontal
-        # vert_hori = 1 if img.shape[0] >= img.shape[1] else 0
+
+    original_mid  = np.array([img.shape[1]/2, img.shape[0]/2])
+    mask = None
+
     ellipse = original_mid, 1.6*original_mid, 0
     Ellipse = cv2.ellipse(np.zeros_like(img), ellipse, (255,255,255), -1)
     result = np.bitwise_and(img, Ellipse)
+
+    # 1: vertical; 0: horizontal
+    vertical = 1 if img.shape[0] >= img.shape[1] else 0
+    if vertical:
+        result = cv2.rotate(result, cv2.ROTATE_90_CLOCKWISE)
 
     return mask, result
 
