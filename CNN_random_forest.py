@@ -44,7 +44,7 @@ class CNN(nn.Module):
         pool_sizes   = np.array([2,2,2,2,2])
         pool_strides = np.array([2,2,2,2,2])
 
-        fcs = [512] #512, 100
+        fcs = [512, 100] #512, 100
 
         if do_dropblock:
             self.Dropblock = LinearScheduler(
