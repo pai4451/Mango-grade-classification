@@ -2,7 +2,6 @@ import os
 import time
 import numpy as np
 import pandas as pd
-import seaborn as sn
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -105,7 +104,7 @@ class EarlyStopping:
         self.val_loss_min = val_loss
 
 
-def print_confusion_matrix(confusion_matrix, class_names, figsize = (10,7), fontsize=14, save_name = 'confusion_matrix'):
+def print_confusion_matrix(cm, class_names, figsize = (10,7), fontsize=14, cmap=plt.cm.Blues, save_name = 'confusion_matrix'):
     """Prints a confusion matrix, as returned by sklearn.metrics.confusion_matrix, as a heatmap.
     
     Arguments
@@ -126,18 +125,19 @@ def print_confusion_matrix(confusion_matrix, class_names, figsize = (10,7), font
     matplotlib.figure.Figure
         The resulting confusion matrix figure
     """
-    df_cm = pd.DataFrame(
-        confusion_matrix, index=class_names, columns=class_names, 
-    )
-    fig = plt.figure(figsize=figsize)
-    try:
-        heatmap = sn.heatmap(df_cm, annot=True, fmt="d")
-    except ValueError:
-        raise ValueError("Confusion matrix values must be integers.")
-    heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=90, ha='right', fontsize=fontsize)
-    heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=0, ha='right', fontsize=fontsize)
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.figure(figsize=figsize, dpi=160)
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.colorbar()
+    for i in range(len(cm)):
+        for j in range(len(cm)):
+            plt.annotate(cm[i,j],xy=(j,i),
+                         horizontalalignment='center',
+                         verticalalignment='center',
+                         color="white" if  i == j else "black") 
+    plt.ylabel('True label', fontsize = fontsize)
+    plt.xlabel('Predicted label', fontsize = fontsize)
+    plt.yticks([0,1,2],class_names)
+    plt.xticks([0,1,2],class_names)
     plt.tight_layout()
     plt.savefig(save_name + ".jpg", format="jpg")
     #plt.show()
@@ -154,7 +154,7 @@ def show_train_history(train_history, val_history, monitor = 'Loss',save_name = 
     plt.savefig(save_name + ".jpg", format="jpg")
     #plt.show()
 
-def predict(model, test_image_name, transform, save_name):
+def predict(model, test_image_name, transform, save_name, rf_model = None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Make prediction...')
     idx_to_class = {0:'A',1:'B',2:'C'}
@@ -165,20 +165,25 @@ def predict(model, test_image_name, transform, save_name):
     Parameters
         :param model: Model to test
         :param test_image_name: Test image
-
     '''
     for i, img_name in enumerate(tqdm(test_image_name)):
 
-        test_image = Image.open('./data/C1-P1_Test/' + img_name)
+        test_image = Image.open('./data/test_black/' + img_name)
 
         test_image_tensor = transform(test_image)
         test_image_tensor = test_image_tensor.view(1, 3, 224, 224).to(device)
 
         with torch.no_grad():
             model.eval()
-            ps = model(test_image_tensor)
-            topk, topclass = ps.topk(3, dim=1)
-            predict.append(idx_to_class[topclass.cpu().numpy()[0][0]])
+            if rf_model != None:
+                cnn_output = model.get_conv_output(test_image_tensor)
+                ps = rf_model.predict(cnn_output)
+                ans = ps[0]
+                predict.append(idx_to_class[ans])
+            else:
+                ps = model(test_image_tensor)
+                topk, topclass = ps.topk(3, dim=1)
+                predict.append(idx_to_class[topclass.cpu().numpy()[0][0]])
     df = pd.DataFrame({'image_id':test_image_name, 'label':predict})
     df.to_csv(save_name +'.csv', index=False)
     print('prediction finish! Generate %s.csv'% save_name)
