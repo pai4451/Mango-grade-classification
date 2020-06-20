@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch import nn, optim
 from utils import *
-
+from tqdm import tqdm
 
 def train_and_validate(model, loss_criterion, optimizer, epochs=25, patience=3, save_name='checkpoint'):
     '''
@@ -34,7 +34,7 @@ def train_and_validate(model, loss_criterion, optimizer, epochs=25, patience=3, 
         train_acc = 0.0
         valid_loss = 0.0
         valid_acc = 0.0
-        for i, data in enumerate(train_loader):
+        for i, data in enumerate(tqdm(train_loader)):
             inputs, labels = data[0].to(device), data[1].to(device)
             # Clean existing gradients
             optimizer.zero_grad()
@@ -115,7 +115,7 @@ def computeTestSetAccuracy(model, test_data, test_loader, loss_criterion):
         model.eval()
 
         # Validation loop
-        for i, data in enumerate(test_loader):
+        for i, data in enumerate(tqdm(test_loader)):
             inputs, labels = data[0].to(device), data[1].to(device)
             # Forward pass - compute outputs on input data using the model
             outputs = model(inputs)
@@ -144,7 +144,7 @@ def computeTestSetAccuracy(model, test_data, test_loader, loss_criterion):
 
 if __name__ == '__main__':
 
-    model_name = "Densenet169"
+    model_name = os.path.basename(__file__)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Assuming that we are on a CUDA machine, this should print a CUDA device:
@@ -152,29 +152,26 @@ if __name__ == '__main__':
     print("Found", device, "device")
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
-    image_transforms = {'train': transforms.Compose([transforms.Resize((224, 224)),
-                                                    MyRotationTransform(angles=15),
+    image_transforms = {'train': transforms.Compose([transforms.RandomRotation(40),
+                                                    transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
                                                     transforms.RandomHorizontalFlip(p=0.5),
+                                                    transforms.Resize((224, 224)),
                                                     transforms.ToTensor(),
-                                                    transforms.Normalize(
-                                                        mean, std),
+                                                    transforms.Normalize(mean, std),
                                                     ]),
                         'valid': transforms.Compose([transforms.Resize((224, 224)),
-                                                    MyRotationTransform(angles=15),
-                                                    transforms.RandomHorizontalFlip(p=0.5),
                                                     transforms.ToTensor(),
-                                                    transforms.Normalize(
-                                                    mean, std),
+                                                    transforms.Normalize(mean, std),
                                                     ])}
     BATCH_SIZE = 64
 
     train_data = MangoDataset(
-        './data/train.csv', './data/C1-P1_Train', image_transforms['train'])
+        './data/train.csv', './data/train_black', image_transforms['train'])
     train_loader = torch.utils.data.DataLoader(
         dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
 
     valid_data = MangoDataset(
-        './data/dev.csv', './data/C1-P1_Dev', image_transforms['valid'])
+        './data/dev.csv', './data/val_black', image_transforms['valid'])
     valid_loader = torch.utils.data.DataLoader(
         dataset=valid_data, batch_size=BATCH_SIZE, shuffle=False)
 
@@ -189,12 +186,9 @@ if __name__ == '__main__':
 
     densenet169.classifier = nn.Sequential(
         nn.Linear(fc_inputs, 512),
-        nn.Tanh(),
+        nn.ReLU(),
         nn.Dropout(0.5),
-        nn.Linear(512, 128), 
-        nn.Tanh(),
-        nn.Dropout(0.5),
-        nn.Linear(128, 3), 
+        nn.Linear(512, 3), 
         nn.LogSoftmax(dim=1) # For using NLLLoss()
     )
 
@@ -222,18 +216,15 @@ if __name__ == '__main__':
 
     model.classifier = nn.Sequential(
         nn.Linear(fc_inputs, 512),
-        nn.Tanh(),
+        nn.ReLU(),
         nn.Dropout(0.5),
-        nn.Linear(512, 128), 
-        nn.Tanh(),
-        nn.Dropout(0.5),
-        nn.Linear(128, 3), 
+        nn.Linear(512, 3), 
         nn.LogSoftmax(dim=1) # For using NLLLoss()
     )
     model.load_state_dict(torch.load(model_name + '.pt'))
 
     model.to(device)
-
+    model.eval()
     confusion_matrix, avg_val_loss, avg_val_acc = computeTestSetAccuracy(
         model, valid_data, valid_loader, loss_func)
 
